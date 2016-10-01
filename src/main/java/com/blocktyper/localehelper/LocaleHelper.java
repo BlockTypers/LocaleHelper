@@ -18,6 +18,7 @@ public class LocaleHelper {
 	private Logger logger;
 	private File pluginsFolder;
 	private String targetPluginFolderName;
+	private String resourceName;
 	
 	private static final String ESSENTIALS = "Essentials";
 
@@ -25,13 +26,14 @@ public class LocaleHelper {
 
 	}
 
-	public LocaleHelper(Logger logger, File pluginsFolder) {
-		this(logger, pluginsFolder, null);
+	public LocaleHelper(Logger logger, File pluginsFolder, String resourceName) {
+		this(logger, pluginsFolder, resourceName, null);
 	}
 
-	public LocaleHelper(Logger logger, File pluginFolder, String targetPluginFolderName) {
+	public LocaleHelper(Logger logger, File pluginFolder, String resourceName, String targetPluginFolderName) {
 		this.logger = logger;
 		this.pluginsFolder = pluginFolder;
+		this.resourceName = resourceName;
 		this.targetPluginFolderName = targetPluginFolderName;
 		if (this.targetPluginFolderName == null || !this.targetPluginFolderName.isEmpty()) {
 			this.targetPluginFolderName = ESSENTIALS;
@@ -53,16 +55,16 @@ public class LocaleHelper {
 				}
 
 				try {
-					bundle = ResourceBundle.getBundle("resources/Messages", locale);
+					bundle = ResourceBundle.getBundle("resources/" + resourceName, locale);
 				} catch (Exception e) {
-					logWarning("Messages bundle did not load successfully from default location.");
+					logWarning(resourceName+" bundle did not load successfully from default location.");
 				}
 				if (bundle == null) {
-					logInfo("Checking for Messages bundle in secondary location.");
+					logInfo("Checking for "+resourceName+" bundle in secondary location.");
 					try {
-						bundle = ResourceBundle.getBundle("Messages", locale);
+						bundle = ResourceBundle.getBundle(resourceName, locale);
 					} catch (Exception e) {
-						logWarning("Messages bundle did not load successfully from secondary location.");
+						logWarning(resourceName + " bundle did not load successfully from secondary location.");
 					}
 
 					if (bundle == null) {
@@ -71,10 +73,10 @@ public class LocaleHelper {
 						bundleLoadFailed = true;
 						return key;
 					} else {
-						logInfo("Messages bundle loaded successfully from secondary location.");
+						logInfo(resourceName + " bundle loaded successfully from secondary location.");
 					}
 				} else {
-					logInfo("Messages bundle loaded successfully from default location.");
+					logInfo(resourceName + " bundle loaded successfully from default location.");
 				}
 			}
 
