@@ -3,9 +3,22 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.blocktyper.localehelper</groupId>
 	<artifactId>localehelper</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>LocaleHelper</name>
-	<description>	</description>
+	<description>Project to load a "locale" configuration setting from a yml file</description>
+	<packaging>jar</packaging>
+
+	<licenses>
+		<license>
+			<name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	
+	<scm>
+    <url>https://github.com/spaarkimus/LocaleHelper</url>
+  </scm>
 
 	<dependencies>
 		<dependency>
@@ -22,25 +35,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>
