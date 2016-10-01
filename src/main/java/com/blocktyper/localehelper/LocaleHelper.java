@@ -19,7 +19,7 @@ public class LocaleHelper {
 	private File pluginsFolder;
 	private String targetPluginFolderName;
 	private String resourceName;
-	
+
 	private static final String ESSENTIALS = "Essentials";
 
 	LocaleHelper() {
@@ -40,8 +40,6 @@ public class LocaleHelper {
 		}
 	}
 
-	
-
 	public String getLocalizedMessage(String key) {
 
 		String value = key;
@@ -54,29 +52,30 @@ public class LocaleHelper {
 					locale = Locale.getDefault();
 				}
 
-				try {
-					bundle = ResourceBundle.getBundle("resources/" + resourceName, locale);
-				} catch (Exception e) {
-					logWarning(resourceName+" bundle did not load successfully from default location.");
-				}
-				if (bundle == null) {
-					logInfo("Checking for "+resourceName+" bundle in secondary location.");
-					try {
-						bundle = ResourceBundle.getBundle(resourceName, locale);
-					} catch (Exception e) {
-						logWarning(resourceName + " bundle did not load successfully from secondary location.");
-					}
+				String[] paths = { "resources/" + resourceName + "/" + resourceName, "resources/" + resourceName,
+						resourceName };
 
-					if (bundle == null) {
-						logWarning(
-								"Messages will appear as dot separated key names.  Please remove this plugin from your plugin folder if this behaviour is not desired.");
-						bundleLoadFailed = true;
-						return key;
-					} else {
-						logInfo(resourceName + " bundle loaded successfully from secondary location.");
+				int i = 0;
+				for (String path : paths) {
+					i++;
+					logInfo("Loading " + resourceName + " bundle from location #" + i + ".");
+					try {
+						bundle = ResourceBundle.getBundle(path, locale);
+					} catch (Exception e) {
+						logWarning(resourceName + " bundle did not load successfully location #" + i + ".");
 					}
+					if(bundle != null){
+						break;
+					}
+				}
+
+				if (bundle == null) {
+					logWarning(
+							"Messages will appear as dot separated key names.  Please remove this plugin from your plugin folder if this behaviour is not desired.");
+					bundleLoadFailed = true;
+					return key;
 				} else {
-					logInfo(resourceName + " bundle loaded successfully from default location.");
+					logInfo(resourceName + " bundle loaded successfully location #" + i + ".");
 				}
 			}
 
