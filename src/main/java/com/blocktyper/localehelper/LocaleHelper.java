@@ -5,20 +5,16 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import org.yaml.snakeyaml.Yaml;
 
 public class LocaleHelper {
 	private Locale locale = null;
-	private ResourceBundle bundle = null;
-	private boolean bundleLoadFailed = false;
 
 	private Logger logger;
 	private File pluginsFolder;
 	private String targetPluginFolderName;
-	private String resourceName;
 
 	private static final String ESSENTIALS = "Essentials";
 
@@ -26,85 +22,47 @@ public class LocaleHelper {
 
 	}
 
-	public LocaleHelper(Logger logger, File pluginsFolder, String resourceName) {
-		this(logger, pluginsFolder, resourceName, null);
+	public LocaleHelper(Logger logger, File pluginsFolder) {
+		this(logger, pluginsFolder, null);
 	}
 
-	public LocaleHelper(Logger logger, File pluginFolder, String resourceName, String targetPluginFolderName) {
+	public LocaleHelper(Logger logger, File pluginFolder, String targetPluginFolderName) {
 		this.logger = logger;
 		this.pluginsFolder = pluginFolder;
-		this.resourceName = resourceName;
 		this.targetPluginFolderName = targetPluginFolderName;
 		if (this.targetPluginFolderName == null || !this.targetPluginFolderName.isEmpty()) {
 			this.targetPluginFolderName = ESSENTIALS;
 		}
 	}
 
-	public String getLocalizedMessage(String key) {
-
-		String value = key;
+	public Locale getLocale() {
 		try {
-			if (bundle == null) {
+			if (locale == null)
 				initLocaleFromTargetPlugin();
-
-				if (locale == null) {
-					logInfo("Using default locale.");
-					locale = Locale.getDefault();
-				}
-
-				String[] paths = { "resources/" + resourceName + "/" + resourceName, "resources/" + resourceName,
-						resourceName };
-
-				int i = 0;
-				for (String path : paths) {
-					i++;
-					logInfo("Loading " + resourceName + " bundle from location #" + i + ".");
-					try {
-						bundle = ResourceBundle.getBundle(path, locale);
-					} catch (Exception e) {
-						logWarning(resourceName + " bundle did not load successfully location #" + i + ".");
-					}
-					if(bundle != null){
-						break;
-					}
-				}
-
-				if (bundle == null) {
-					logWarning(
-							"Messages will appear as dot separated key names.  Please remove this plugin from your plugin folder if this behaviour is not desired.");
-					bundleLoadFailed = true;
-					return key;
-				} else {
-					logInfo(resourceName + " bundle loaded successfully location #" + i + ".");
-				}
-			}
-
-			if (bundleLoadFailed) {
-				return key;
-			}
-
-			value = bundle.getString(key);
-
-			value = key != null ? (value != null && !value.trim().isEmpty() ? value : key) : "null key";
 		} catch (Exception e) {
-			logWarning("Unexpected error getting localized string for key(" + key + "). Message: " + e.getMessage());
+			logWarning("Unexpected error getting locale from " + targetPluginFolderName + " config. Message: "
+					+ e.getMessage());
 		}
-		return value;
+		if (locale == null) {
+			logInfo("Using default locale.");
+			locale = Locale.getDefault();
+		}
+		return locale;
 	}
 
 	@SuppressWarnings("unchecked")
 	String getLocaleFromFileInputStream(InputStream inputStream) {
 		Yaml yaml = new Yaml();
-		String localeFromEssentials = null;
+		String localeFromPlugin = null;
 		Object configObject = yaml.load(inputStream);
 		Map<String, Object> configMap = (Map<String, Object>) configObject;
 		if (configMap != null) {
 			if (configMap.containsKey("locale") && configMap.get("locale") != null) {
-				localeFromEssentials = configMap.get("locale").toString();
+				localeFromPlugin = configMap.get("locale").toString();
 				logInfo("locale found: " + configMap.get("locale").toString());
 			}
 		}
-		return localeFromEssentials;
+		return localeFromPlugin;
 	}
 
 	private void initLocaleFromTargetPlugin() {
@@ -116,7 +74,7 @@ public class LocaleHelper {
 				return;
 			}
 
-			File essentialsDataFolder = null;
+			File pluginDataFolder = null;
 			if (pluginsFolder.listFiles() != null) {
 				logInfo("Checking Plugin folder.");
 				for (File file : pluginsFolder.listFiles()) {
@@ -127,22 +85,22 @@ public class LocaleHelper {
 						continue;
 					}
 					if (file.getName().startsWith(targetPluginFolderName)) {
-						essentialsDataFolder = file;
+						pluginDataFolder = file;
 						break;
 					}
 				}
 			}
 
-			if (essentialsDataFolder == null) {
+			if (pluginDataFolder == null) {
 				logInfo("Could not locate " + targetPluginFolderName + " data folder.");
 				return;
 			}
 
-			File essentialsConfigFile = null;
-			if (essentialsDataFolder.listFiles() != null) {
-				logInfo("Checking " + targetPluginFolderName + " data folder: " + essentialsDataFolder.getName() + "("
-						+ (essentialsDataFolder.isDirectory() ? "dir" : "file") + ")");
-				for (File file : essentialsDataFolder.listFiles()) {
+			File pluginConfigFile = null;
+			if (pluginDataFolder.listFiles() != null) {
+				logInfo("Checking " + targetPluginFolderName + " data folder: " + pluginDataFolder.getName() + "("
+						+ (pluginDataFolder.isDirectory() ? "dir" : "file") + ")");
+				for (File file : pluginDataFolder.listFiles()) {
 					if (file == null || file.isDirectory()) {
 						continue;
 					}
@@ -151,32 +109,32 @@ public class LocaleHelper {
 					}
 					if (file.getName().startsWith("config.yml")) {
 						logInfo(targetPluginFolderName + " config file found: " + file.getName());
-						essentialsConfigFile = file;
+						pluginConfigFile = file;
 					}
 				}
 			}
 
-			if (essentialsConfigFile == null) {
-				logInfo("Could not locate Essesntials config file.");
+			if (pluginConfigFile == null) {
+				logInfo("Could not locate " + pluginsFolder + " config file.");
 				return;
 			}
 
 			logInfo("loading " + targetPluginFolderName + " config file");
-			String localeFromEssentials = getLocaleFromFileInputStream(new FileInputStream(essentialsConfigFile));
+			String localeFromPlugin = getLocaleFromFileInputStream(new FileInputStream(pluginConfigFile));
 
-			if (localeFromEssentials == null || localeFromEssentials.trim().isEmpty()) {
+			if (localeFromPlugin == null || localeFromPlugin.trim().isEmpty()) {
 				logInfo("Locale not set in " + targetPluginFolderName + " config.");
 				return;
 			}
 
-			logInfo("Using locale from " + targetPluginFolderName + " config: " + localeFromEssentials);
+			logInfo("Using locale from " + targetPluginFolderName + " config: " + localeFromPlugin);
 			try {
-				if (localeFromEssentials.contains("_")) {
-					String language = localeFromEssentials.substring(0, localeFromEssentials.indexOf("_"));
+				if (localeFromPlugin.contains("_")) {
+					String language = localeFromPlugin.substring(0, localeFromPlugin.indexOf("_"));
 					logInfo("language: " + language);
 					String country = null;
-					if (localeFromEssentials.length() > language.length()) {
-						country = localeFromEssentials.substring(language.length() + 1);
+					if (localeFromPlugin.length() > language.length()) {
+						country = localeFromPlugin.substring(language.length() + 1);
 						logInfo("country: " + country);
 					}
 					if (country == null) {
@@ -185,7 +143,7 @@ public class LocaleHelper {
 						locale = new Locale(language, country);
 					}
 				} else {
-					locale = Locale.forLanguageTag(localeFromEssentials);
+					locale = Locale.forLanguageTag(localeFromPlugin);
 				}
 
 			} catch (Exception e) {
